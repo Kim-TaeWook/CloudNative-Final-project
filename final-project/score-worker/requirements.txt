@@ -1,0 +1,8 @@
+# 1. RabbitMQ 통신용 (메시지 수신)
+pika
+
+# 2. Redis 연결용 (실시간 랭킹 업데이트)
+redis
+
+# 3. MySQL 연결용 (DB 영구 저장)
+pymysql

@@ -1,0 +1,112 @@
+# 도커 컴포즈 파일 버전 정의
+version: '3.8'
+
+# 1. 모든 컨테이너가 사용할 공용 네트워크 정의
+networks:
+  project-network:
+    driver: bridge
+
+# 2. DB 데이터를 영구 저장할 볼륨 정의
+volumes:
+  db-data:
+
+# 3. 8개의 서비스(컨테이너) 상세 정의
+services:
+
+  # --- 서비스 1: 프록시 (Nginx Proxy Manager) ---
+  proxy:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: final_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "81:81"
+      - "443:443"
+    volumes:
+      - ./proxy-data/data:/data
+      - ./proxy-data/letsencrypt:/etc/letsencrypt
+    networks:
+      - project-network
+
+  # --- 서비스 2: DB (MySQL) ---
+  db:
+    image: mysql:8.0
+    container_name: final_db
+    restart: unless-stopped
+    ports:
+      - "33306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "rootpassword123"
+      MYSQL_DATABASE: "fruit_box_db"
+      MYSQL_USER: "game_user"
+      MYSQL_PASSWORD: "game_password123"
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - project-network
+
+  # --- 서비스 3: 세션 (Redis) ---
+  redis:
+    image: redis:latest
+    container_name: final_redis
+    restart: unless-stopped
+    networks:
+      - project-network
+
+  # --- 서비스 4: 프론트엔드 (사과 게임) ---
+  front:
+    # build 섹션 대신 image 섹션 사용
+    image: taewook001102/final-front:latest
+    container_name: final_front
+    volumes:
+      - ./front:/var/www/html
+    networks:
+      - project-network
+    depends_on: [proxy]
+
+  # --- 서비스 5: 유저 API (Python) ---
+  user-api:
+    # build 섹션 대신 image 섹션 사용
+    image: taewook001102/final-user-api:latest
+    container_name: final_user_api
+    volumes:
+      - ./user-api:/app
+    networks:
+      - project-network
+    depends_on: [db, redis]
+
+  # --- 서비스 6: 점수 API (PHP) ---
+  score-api:
+    # build 섹션 대신 image 섹션 사용
+    image: taewook001102/final-score-api:latest
+    container_name: final_score_api
+    volumes:
+      - ./score-api:/var/www/html
+      - /var/www/html/vendor # (중요) vendor 폴더 덮어쓰기 방지
+    networks:
+      - project-network
+    depends_on: [db, redis]
+
+  # --- 서비스 7: 메시지 큐 (RabbitMQ) ---
+  queue:
+    image: rabbitmq:3-management-alpine
+    container_name: final_queue
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - project-network
+
+  # --- 서비스 8: 점수 처리 워커 (Python) ---
+  worker:
+    # build 섹션 대신 image 섹션 사용
+    image: taewook001102/final-worker:latest
+    container_name: final_worker
+    restart: unless-stopped
+    volumes:
+      - ./score-worker:/app
+    networks:
+      - project-network
+    depends_on: [db, redis, queue]

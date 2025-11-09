@@ -1,0 +1,14 @@
+# FastAPI 웹 프레임워크
+fastapi
+
+# ASGI 서버 (FastAPI 실행용)
+uvicorn
+
+# Redis 클라이언트 (세션 공유용)
+redis
+
+# MySQL 클라이언트
+pymysql
+
+# Form 데이터 파싱용
+python-multipart

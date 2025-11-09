@@ -1,0 +1,126 @@
+# =============================================================
+# 기말 과제: "후르츠 박스 랭킹보드" 8-Container Plan
+# - 6개 컨테이너 + RabbitMQ(queue) + Python(worker)
+# =============================================================
+
+# 도커 컴포즈 파일 버전 정의
+version: '3.8'
+
+# 1. 모든 컨테이너가 사용할 공용 네트워크 정의
+networks:
+  project-network:
+    driver: bridge
+
+# 2. DB 데이터를 영구 저장할 볼륨 정의
+volumes:
+  db-data:
+
+# 3. 8개의 서비스(컨테이너) 상세 정의
+services:
+
+  # --- 서비스 1: 프록시 (Nginx Proxy Manager) ---
+  proxy:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: final_proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"    # HTTP (mygame.com 접속용)
+      - "81:81"    # NPM 관리자 페이지
+      - "443:443"  # HTTPS
+    volumes:
+      - ./proxy-data/data:/data
+      - ./proxy-data/letsencrypt:/etc/letsencrypt
+    networks:
+      - project-network
+
+  # --- 서비스 2: DB (MySQL) ---
+  db:
+    image: mysql:8.0
+    container_name: final_db
+    restart: unless-stopped
+    ports:
+      - "33306:3306" # HeidiSQL 접속용
+    environment:
+      MYSQL_ROOT_PASSWORD: "rootpassword123"
+      MYSQL_DATABASE: "fruit_box_db"     # 생성할 DB 이름
+      MYSQL_USER: "game_user"            # 생성할 계정
+      MYSQL_PASSWORD: "game_password123" # 계정 비밀번호
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db-data:/var/lib/mysql # DB 데이터를 위에서 정의한 'db-data' 볼륨에 영구 저장
+    networks:
+      - project-network
+
+  # --- 서비스 3: 세션 (Redis) ---
+  redis:
+    image: redis:latest
+    container_name: final_redis
+    restart: unless-stopped
+    networks:
+      - project-network
+
+  # --- 서비스 4: 프론트엔드 (사과 게임 - Apache/PHP) ---
+  front:
+    build: 
+      context: ./front # 이 폴더의 'Dockerfile'을 찾아 빌드
+    container_name: final_front
+    volumes:
+      - ./front:/var/www/html # 이 폴더의 코드를 컨테이너와 실시간 동기화
+    networks:
+      - project-network
+    depends_on: 
+      - proxy
+
+  # --- 서비스 5: 유저 API (Python - FastAPI) ---
+  user-api:
+    build: 
+      context: ./user-api # 이 폴더의 'Dockerfile'을 찾아 빌드
+    container_name: final_user_api
+    volumes:
+      - ./user-api:/app   # Python/FastAPI는 /app 폴더를 주로 사용
+    networks:
+      - project-network
+    depends_on: 
+      - db
+      - redis
+
+# --- 서비스 6: 점수 API (PHP - Apache) ---
+  score-api:
+    build: 
+      context: ./score-api 
+    container_name: final_score_api
+    volumes:
+      # 1. 호스트의 코드를 컨테이너에 덮어쓰기 (기존)
+      - ./score-api:/var/www/html
+      # 2. 단, /var/www/html/vendor 폴더는 덮어쓰지 말고
+      #    빌드 시 생성된 'vendor' 폴더를 그대로 사용 (익명 볼륨)
+      - /var/www/html/vendor
+    networks:
+      - project-network
+    depends_on: [db, redis]
+
+  # --- 서비스 7: 메시지 큐 (RabbitMQ) ---
+  queue:
+    image: rabbitmq:3-management-alpine # 관리자 페이지가 포함된 이미지
+    container_name: final_queue
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # AMQP 프로토콜 포트 (서버 연결용)
+      - "15672:15672" # RabbitMQ 관리자 웹 UI (http://VM_IP:15672)
+    networks:
+      - project-network
+
+  # --- 서비스 8: 점수 처리 워커 (Python) ---
+  worker:
+    build: 
+      context: ./score-worker # ./score-worker 폴더의 Dockerfile로 빌드
+    container_name: final_worker
+    restart: unless-stopped
+    volumes:
+      - ./score-worker:/app
+    networks:
+      - project-network
+    depends_on: # DB, Redis, Queue가 모두 켜진 후에 실행
+      - db
+      - redis
+      - queue

@@ -1,0 +1,155 @@
+/* --- 메인 레이아웃 --- */
+#game-container {
+    border: 2px solid #343a40;
+    border-radius: 5px;
+    padding: 15px;
+    background: #fdfdfd;
+}
+
+#game-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+#game-board-wrapper {
+    position: relative; 
+    margin-top: 15px;
+    aspect-ratio: 1 / 1; 
+}
+
+#game-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1rem;
+    color: #333;
+    text-align: center;
+    z-index: 10;
+    transition: opacity 0.3s;
+    opacity: 1; 
+}
+#game-overlay.hidden { 
+    opacity: 0;
+    pointer-events: none;
+}
+#game-overlay p { 
+    font-weight: bold;
+    color: #e74c3c; 
+}
+
+/* 실제 게임판 */
+#game-board {
+    border: 1px solid #eee;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    grid-template-rows: repeat(10, 1fr);
+    gap: 5px; 
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #f0fff0; 
+}
+
+
+.apple {
+    background-image: url('apple.png');
+    background-size: contain; 
+    background-repeat: no-repeat;
+    background-position: center;
+    aspect-ratio: 1 / 1;    
+    display: grid;
+    place-items: center;  
+    font-weight: bold;
+    color: white;
+    font-size: 1.1rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5); 
+    cursor: pointer;
+    user-select: none; 
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s, opacity 0.2s;
+    position: relative; 
+}
+
+.apple.apple-blue {
+    background-image: url('apple_blue.png'); 
+}
+
+.apple.selected {
+    background-color: rgba(241, 196, 15, 0.5);
+    border-radius: 50%;
+    transform: scale(1.05);
+    box-shadow: 0 0 10px #f1c40f;
+}
+
+.apple.removing {
+    transform: scale(0);
+    opacity: 0;
+}
+
+/* --- 점수 획득 애니메이션 --- */
+.score-float {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #2ecc71;
+    text-shadow: 1px 1px 0 white;
+    z-index: 20;
+    pointer-events: none;
+    animation: float-up 1s ease-out forwards;
+}
+
+@keyframes float-up {
+    0% {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -200%);
+        opacity: 0;
+    }
+}
+
+.table th, .table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table th {
+    white-space: nowrap;
+}
+
+
+.btn {
+    border-radius: 10px;
+}
+
+#start-game-btn {
+    font-size: 1.2rem;       
+    font-weight: bold;
+    padding: 10px 24px;    
+}
+
+#submit-score-btn {
+    background-color: #f1c40f; 
+    border-color: #f1c40f;
+    color: #212529; 
+    font-weight: bold;
+}
+
+#submit-score-btn:hover {
+    background-color: #e0b30d;
+    border-color: #d3a60c;
+}
+
+#refresh-ranking-btn {
+    font-weight: bold;
+}

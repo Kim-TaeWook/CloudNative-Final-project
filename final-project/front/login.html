@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>로그인 - 후르츠 박스</title>
+    <link rel="stylesheet" href="https://bootswatch.com/4/lux/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-6">
+                <h2>로그인</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">이메일</label>
+                        <input type="email" class="form-control" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-pass">비밀번호</label>
+                        <input type="password" class="form-control" id="login-pass" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">로그인</button>
+                    <div id="login-msg" class="mt-2"></div>
+                </form>
+            </div>
+            
+            <div class="col-md-6">
+                <h2>회원가입</h2>
+                <form id="join-form">
+                    <div class="form-group">
+                        <label for="join-name">이름 (랭킹에 표시)</label>
+                        <input type="text" class="form-control" id="join-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="join-email">이메일</label>
+                        <input type="email" class="form-control" id="join-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="join-pass">비밀번호</label>
+                        <input type="password" class="form-control" id="join-pass" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">회원가입</button>
+                    <div id="join-msg" class="mt-2"></div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
